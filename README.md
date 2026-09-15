@@ -1,7 +1,26 @@
 # MVP de atendimento automático no WhatsApp com IA
 
 Backend local em FastAPI que recebe mensagens de texto da WhatsApp Cloud API,
-gera respostas com a OpenAI Responses API e as envia ao cliente.
+gera respostas com Ollama local ou OpenAI e as envia ao cliente. O Ollama é o provedor
+padrão para permitir testes locais sem custo de API.
+
+## Demo comercial visual
+
+Com `DEMO_MODE=true`, a página inicial oferece uma demonstração completa sem Meta,
+WhatsApp, Ollama ou qualquer API externa. O catálogo e as regras comerciais ficam no
+serviço `app/services/demo_chat_service.py`, e o histórico é mantido em memória por
+`session_id`.
+
+Depois de iniciar o Uvicorn, abra:
+
+```text
+http://localhost:8000/
+```
+
+A interface possui sugestões rápidas, indicador de digitação, contexto entre mensagens
+e botão **Nova conversa**. O endpoint usado pela tela é `POST /chat`; `POST /reset`
+limpa a sessão. Para voltar a usar uma IA no endpoint da demo, altere
+`DEMO_MODE=false`; Ollama ou OpenAI será escolhido por `AI_PROVIDER`.
 
 ## Arquitetura
 
@@ -11,12 +30,17 @@ app/
 ├── config.py                     # Ambiente e contexto editável da loja
 ├── models.py                     # Modelos Pydantic
 ├── prompts/sales_assistant.py    # System prompt comercial
-├── services/openai_service.py    # Integração com a OpenAI
+├── services/ai_service.py        # Seleção do provedor de IA
+├── services/demo_chat_service.py # Catálogo, regras e sessões da demo
+├── services/ollama_service.py    # Integração local com Ollama
+├── services/openai_service.py    # Integração opcional com OpenAI
 ├── services/whatsapp_service.py  # Envio pela WhatsApp Cloud API
 └── utils/
     ├── logger.py                 # Logs e mascaramento de telefone
     └── message_store.py          # Deduplicação em memória
 ```
+
+Os arquivos `app/static/index.html`, `styles.css` e `app.js` formam a interface web.
 
 O histórico não é persistido. A deduplicação é perdida ao reiniciar e deve ser
 substituída por Redis ou banco de dados em produção. A separação em serviços permite
@@ -35,7 +59,27 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Edite `.env` e preencha as credenciais. Depois:
+## Configurar o Ollama gratuito
+
+Instale o Ollama para Windows e baixe o modelo configurado no `.env`:
+
+```powershell
+ollama pull llama3.2:3b
+ollama run llama3.2:3b
+```
+
+Após o download, você pode encerrar o chat do terminal com `/bye`. O aplicativo do
+Ollama continua servindo sua API local em `http://localhost:11434`.
+
+O `.env` padrão deve conter:
+
+```env
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2:3b
+```
+
+Não é necessário preencher `OPENAI_API_KEY` ao usar Ollama. Depois, inicie a API:
 
 ```powershell
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -94,8 +138,9 @@ Em **Meta for Developers > seu app > WhatsApp > API Setup/Configuration**, obten
 Crie você mesmo um segredo aleatório para `WHATSAPP_VERIFY_TOKEN`; ele não é fornecido
 pela Meta. O valor deve ser idêntico no `.env` e na configuração do webhook.
 
-Na plataforma OpenAI, crie uma API key → `OPENAI_API_KEY` e escolha um modelo disponível
-na sua conta → `OPENAI_MODEL`. Não coloque nenhuma credencial no repositório.
+Para usar OpenAI no lugar do Ollama, configure `AI_PROVIDER=openai`, crie uma API key →
+`OPENAI_API_KEY` e escolha um modelo disponível na sua conta → `OPENAI_MODEL`. Não
+coloque nenhuma credencial no repositório.
 
 ## Segurança e comportamento
 
@@ -106,7 +151,7 @@ na sua conta → `OPENAI_MODEL`. Não coloque nenhuma credencial no repositório
 - Os logs mascaram telefones e nunca imprimem tokens, mas exibem texto e resposta para
   depuração. Avalie remover esse conteúdo dos logs em produção por privacidade.
 - Exceções internas não são retornadas aos clientes.
-- Em falha da OpenAI, o bot tenta enviar uma resposta genérica. Falhas do WhatsApp são
+- Em falha do provedor de IA, o bot tenta enviar uma resposta genérica. Falhas do WhatsApp são
   somente registradas.
 
 ## Limitações intencionais

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Demonstração de atendimento automatizado para loja de iPhones">
+  <title>WD iPhones — Atendimento</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="phone" aria-label="Atendimento WD iPhones">
+      <header class="chat-header">
+        <div class="brand-avatar" aria-hidden="true">W</div>
+        <div class="brand-copy">
+          <div class="brand-line">
+            <h1>WD iPhones</h1>
+            <span class="verified" title="Loja verificada">✓</span>
+          </div>
+          <p><span class="online-dot"></span> online</p>
+        </div>
+        <button id="resetButton" class="reset-button" type="button" aria-label="Iniciar nova conversa">
+          <span aria-hidden="true">↻</span> Nova conversa
+        </button>
+      </header>
+
+      <div class="demo-label">Demo de atendimento automatizado com IA</div>
+
+      <div id="messages" class="messages" role="log" aria-live="polite">
+        <div class="day-pill">Hoje</div>
+        <article class="message assistant-message">
+          <p>Olá! 😊 Bem-vindo à WD iPhones. Qual modelo você está procurando?</p>
+          <time></time>
+        </article>
+      </div>
+
+      <div class="composer-area">
+        <div class="quick-actions" aria-label="Sugestões de mensagens">
+          <button type="button" data-message="Tem iPhone 15 Pro?">Tem iPhone 15 Pro?</button>
+          <button type="button" data-message="Quanto fica no PIX?">Quanto fica no PIX?</button>
+          <button type="button" data-message="Parcela em 12x?">Parcela em 12x?</button>
+          <button type="button" data-message="Quero comprar">Quero comprar</button>
+        </div>
+        <form id="chatForm" class="composer">
+          <label class="sr-only" for="messageInput">Digite sua mensagem</label>
+          <input id="messageInput" maxlength="1000" autocomplete="off" placeholder="Digite uma mensagem...">
+          <button id="sendButton" type="submit" aria-label="Enviar mensagem">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 20.5 21 12 3.5 3.5v6.6L16 12 3.5 13.9z"/></svg>
+          </button>
+        </form>
+        <p class="privacy-note">Respostas geradas para demonstração comercial</p>
+      </div>
+    </section>
+  </main>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

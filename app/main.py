@@ -2,13 +2,24 @@ import hashlib
 import hmac
 import json
 import logging
+from pathlib import Path
 from typing import Any
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
-from app.models import IncomingTextMessage, TestChatRequest, TestChatResponse
-from app.services.openai_service import generate_ai_response
+from app.models import (
+    ChatRequest,
+    ChatResponse,
+    IncomingTextMessage,
+    ResetRequest,
+    TestChatRequest,
+    TestChatResponse,
+)
+from app.services.ai_service import generate_ai_response
+from app.services.demo_chat_service import chat, reset_session
 from app.services.whatsapp_service import send_whatsapp_message
 from app.utils.logger import configure_logging, mask_phone_number
 from app.utils.message_store import message_store
@@ -17,6 +28,8 @@ configure_logging()
 logger = logging.getLogger(__name__)
 settings = get_settings()
 app = FastAPI(title="WhatsApp AI Sales Assistant", version="0.1.0")
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 FALLBACK_MESSAGE = (
     "Estou com uma instabilidade no atendimento agora. Vou deixar sua mensagem "
@@ -92,6 +105,23 @@ async def _process_message(message: IncomingTextMessage) -> None:
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/", include_in_schema=False)
+async def demo_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.post("/chat", response_model=ChatResponse)
+async def demo_chat(body: ChatRequest) -> ChatResponse:
+    reply = await chat(body.session_id, body.message.strip())
+    return ChatResponse(reply=reply)
+
+
+@app.post("/reset")
+async def reset_demo(body: ResetRequest) -> dict[str, str]:
+    await reset_session(body.session_id)
+    return {"status": "reset"}
 
 
 @app.get("/webhook")

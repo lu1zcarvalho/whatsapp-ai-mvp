@@ -16,8 +16,19 @@ Quando uma informação comercial não estiver disponível, encaminhe para atend
 """.strip()
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass(frozen=True)
 class Settings:
+    demo_mode: bool = _env_bool("DEMO_MODE", True)
+    ai_provider: str = os.getenv("AI_PROVIDER", "ollama").lower()
+    ollama_base_url: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    ollama_model: str = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     openai_model: str = os.getenv("OPENAI_MODEL", "")
     whatsapp_token: str = os.getenv("WHATSAPP_TOKEN", "")
